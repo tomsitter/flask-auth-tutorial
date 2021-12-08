@@ -3,15 +3,15 @@
 
 {% block content %}
 
-{% if session.get("user_id") %}
-  {{ logged_in_user.username}} <br>
-  {{ logged_in_user.description }}
+{% if current_user.is_authenticated() %}
+  {{ current_user.username}} <br>
+  {{ current_user.description }}
 
   <h2>Users from the db:</h2>
   {% if users %}
   {% for user in users %}
     {{ user.username }} {{ user.email }}
-    {% if logged_in_user.id == user.id %}
+    {% if current_user.id == user.id %}
     <- logged in user
     {% endif %}
     <br>
