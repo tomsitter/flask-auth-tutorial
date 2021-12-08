@@ -27,9 +27,19 @@
           <li class="nav-item {{ 'active' if active_page == 'home' }}">
             <a href="{{ url_for('main.home') }}" class="nav-link">Home</a>
           </li>
+          {% if session.get("user_id") %}
+          <li class="nav-item">
+            <a href="{{ url_for('auth.logout') }}" class="nav-link">Logout</a>
+          </li>
+          {% else %}
+          <li class="nav-item {{ 'active' if active_page == 'login' }}">
+            <a href="{{ url_for('auth.login') }}" class="nav-link">Login</a>
+          </li>
           <li class="nav-item {{ 'active' if active_page == 'register' }}">
             <a href="{{ url_for('auth.register') }}" class="nav-link">Register</a>
           </li>
+          {% endif %}
+          
         </ul>
       </div>
     </div>

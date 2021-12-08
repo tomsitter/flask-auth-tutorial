@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% set active_page = 'home' %}
+
+{% block content %}
+
+{% if session.get("user_id") %}
+  {{ logged_in_user.username}} <br>
+  {{ logged_in_user.description }}
+
+  <h2>Users from the db:</h2>
+  {% if users %}
+  {% for user in users %}
+    {{ user.username }} {{ user.email }}
+    {% if logged_in_user.id == user.id %}
+    <- logged in user
+    {% endif %}
+    <br>
+  {% endfor %}
+  {% endif %}
+
+{% else %}
+  {% include 'home/_landing.html' %}
+{% endif %}
+
+{% endblock %}
