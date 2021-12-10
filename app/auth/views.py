@@ -2,7 +2,7 @@ from flask import Blueprint, current_app, session, g, render_template, redirect,
 from app.auth.forms import RegistrationForm, LoginForm
 from app import db
 from app.models import User
-from werkzeug.local import Local, LocalProxy
+from werkzeug.local import LocalProxy
 from itsdangerous.url_safe import URLSafeSerializer
 from functools import wraps
 
@@ -63,7 +63,7 @@ def register():
         db.session.add(user)
         db.session.commit()
         flash("You are registered", "success")
-        return redirect(url_for("main.home"))
+        return redirect(url_for("auth.login"))
 
     return render_template("register.html", form=form)
 

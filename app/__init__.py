@@ -21,8 +21,10 @@ def create_app():
 
     from app.auth.views import auth
     from app.main.views import main
+    from app.account.views import account
     app.register_blueprint(auth)
     app.register_blueprint(main)
+    app.register_blueprint(account, url_prefix="/user")
 
     from app.main.errors import page_not_found
     app.register_error_handler(404, page_not_found)
