@@ -1,7 +1,7 @@
 from flask import Blueprint, current_app, session, g, render_template, redirect, url_for, flash, make_response, request
 from app.auth.forms import RegistrationForm, LoginForm
 from app import db
-from app.models import User
+from app.models import User, Role
 from werkzeug.local import LocalProxy
 from itsdangerous.url_safe import URLSafeSerializer
 from functools import wraps
@@ -19,6 +19,17 @@ def login_required(f):
         return f(*args, **kwargs)
     return _login_required
 
+
+def role_required(role):
+    def _role_required(f):
+        @wraps(f)
+        def __role_required(*args, **kwargs):
+            if not current_user.is_role(role):
+                flash("You are not authorized to access this page", "danger")
+                return redirect(url_for("main.home"))
+            return f(*args, **kwargs)
+        return __role_required
+    return _role_required
 
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
@@ -58,8 +69,9 @@ def register():
         password = form.password.data
         location = form.location.data
         description = form.description.data
+        role = form.role.data
 
-        user = User(username, email, password, location, description) # add the rest
+        user = User(username, email, password, location, description, role)
         db.session.add(user)
         db.session.commit()
         flash("You are registered", "success")
@@ -104,6 +116,10 @@ def decrypt_cookie(encrypted_content):
 @auth.app_context_processor
 def inject_current_user():
     return dict(current_user=get_current_user())
+
+@auth.app_context_processor
+def inject_roles():
+    return dict(Role=Role)
 
 def get_current_user():
     _current_user = getattr(g, "_current_user", None)

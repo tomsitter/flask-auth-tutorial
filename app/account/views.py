@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, redirect, flash, url_for
 from werkzeug.utils import escape, unescape
 from app.account.forms import UpdateAccountForm
 from app import db
-from app.models import User
+from app.models import User, Role
 from app.auth.views import current_user, login_required, logout_user
 
 account = Blueprint("account", __name__, template_folder="templates")
@@ -11,7 +11,12 @@ account = Blueprint("account", __name__, template_folder="templates")
 @login_required
 def show(username):
     user = User.query.filter_by(username=username).first()
-    return render_template("show_account.html", user=user)
+    gigs = None
+    if user.is_role(Role.EMPLOYER):
+        gigs = user.gigs.all()
+    if user.is_role(Role.MUSICIAN):
+        gigs = user.applied_gigs.all()
+    return render_template("show_account.html", user=user, gigs=gigs)
 
 @account.route("/edit", methods=["GET", "POST"])
 @login_required

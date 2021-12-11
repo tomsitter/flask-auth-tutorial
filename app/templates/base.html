@@ -32,6 +32,9 @@
             <a href="{{ url_for('account.show', username=current_user.username)}}" class="nav-link">Account ({{ current_user.username }})</a>
           </li>
           <li class="nav-item">
+            <a href="{{ url_for('gigs.my_gigs') }}" class="nav-link">My gigs</a>
+          </li>
+          <li class="nav-item">
             <a href="{{ url_for('auth.logout') }}" class="nav-link">Logout</a>
           </li>
           {% else %}
@@ -63,7 +66,8 @@
     {% endif %}
   {% endwith %}
   {% block content %}{% endblock %}
-  </div>
+</div>
+
 
   <script src="{{ url_for('static', filename='js/jquery-3.4.1.min.js') }}"></script>
   <script src="{{ url_for('static', filename='js/popper.min.js') }}"></script>

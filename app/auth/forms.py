@@ -3,7 +3,7 @@ from wtforms import validators
 from wtforms.fields import StringField, PasswordField, SubmitField, BooleanField, RadioField, TextAreaField
 from wtforms.fields.html5 import EmailField
 from wtforms.validators import InputRequired, DataRequired, EqualTo, Length, ValidationError, Email
-from app.models import User
+from app.models import Role, User
 
 def user_exists_with_email(form, field):
     user = User.query.filter_by(email=field.data).first()
@@ -48,6 +48,7 @@ class RegistrationForm(FlaskForm):
                                     DataRequired("Data is required!"),
                                     Length(min=10, max=200, message="Description must be between 10 and 200 characters long")
                                 ])
+    role             = RadioField("I am a:", coerce=int, choices = [(Role.MUSICIAN, "Musician"), (Role.EMPLOYER, "Employer")])
     submit           = SubmitField("Register")
 
     def validate_username(form, field):

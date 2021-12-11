@@ -41,6 +41,13 @@
         {{ form.description(class="form-control", rows="8") }}
         {{ field_error_messages(form.description) }}
       </div>
+      <div class="form-group">
+        {{ form.role.label }} <br>
+        {% for item in form.role %}
+          {{ item }} {{ item.label }}<br>
+        {% endfor %}
+        {{ field_error_messages(form.role) }}
+      </div>
       <hr>
       <div class="form-group">
         {{ form.submit(class="btn btn-primary form-control") }}
