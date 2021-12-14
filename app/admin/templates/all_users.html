@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% set active_page = 'users' %}
+{% block title %}Admin - All Users{% endblock %}
+
+{% block content %}
+<div class="row">
+	<div class="col-lg-10">
+		<div class="card card-outline-secondary my-4">
+			<div class="card-header">
+				All users
+			</div>
+			<div class="card-body">
+			{% if users %}
+				{% for user in users %}
+					<h4>
+					<a href="{{ url_for('account.show', username=user.username) }}">{{ user.username }}</a>
+					<small>
+					{% if user.is_role(Role.MUSICIAN) %}
+						(musician)
+					{% endif %}
+					{% if user.is_role(Role.EMPLOYER) %}
+						(employer)
+					{% endif %}
+					{% if user.is_admin() %}
+						(admin)
+					{% endif %}
+					</small>
+					<h4>
+					<small>{{ user.description }}</small>
+						<form method="POST" action="{{ url_for('admin.delete_user', user_id=user.id) }}">
+							<input class="btn btn-danger" type="submit" style="margin-top:10px" name="submit"
+								value="Delete user"
+								onclick="return confirm('Are you sure that you want to premanently delete this account?')">
+						</form>
+						<hr class="form-border">
+				{% endfor %}
+			{% endif %}
+			</div>
+		</div>
+	</div>
+</div>
+</div>
+{% endblock %}
