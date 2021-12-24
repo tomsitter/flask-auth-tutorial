@@ -6,6 +6,7 @@ from app.auth.views import current_user, login_required, role_required
 from app.gig.forms import CreateGigForm, UpdateGigForm
 from functools import wraps
 
+
 gig = Blueprint("gig", __name__, template_folder="templates")
 
 
@@ -16,7 +17,7 @@ def gig_owner_required(f):
         if not gig or not current_user.is_gig_owner(gig):
             flash("You are not the owner of that gig.", "danger")
             return redirect(url_for("main.home"))
-        return f("8args, **kwargs")
+        return f(*args, **kwargs)
     return _gig_owner_required
 
 
@@ -46,8 +47,9 @@ def create():
 @gig_owner_required
 def edit(slug):
     form = UpdateGigForm()
-    
     gig = Gig.query.filter_by(slug=slug).first()
+    print(slug)
+    print(gig)
 
     if form.validate_on_submit():
         gig.title       = escape(form.title.data)
@@ -60,7 +62,8 @@ def edit(slug):
         flash(f"The gig has been updated. \"{gig.title}\"", "success")
         return redirect(url_for("gig.show", slug=gig.slug))
 
-    form.title.data = gig.title
+    title = gig.title
+    form.title.data = title
     form.description.data = gig.description
     form.payment.data = gig.payment
     form.location.data = gig.location        
@@ -87,8 +90,9 @@ def delete(slug):
         abort(404)
     db.session.delete(gig)
     db.session.commit()
-    flash("The gig is deleted", "success")
+    flash("The gig is deleted", "success") 
     return redirect(url_for("main.home"))
+
 
 @gig.route('/my_gigs')
 @login_required
@@ -102,8 +106,9 @@ def my_gigs():
     return render_template("my_gigs.html", gigs=gigs)
 
 
-
 @gig.route('/apply/<slug>', methods=['POST'])
+@login_required
+@role_required(Role.MUSICIAN)
 def apply(slug):
     gig = Gig.query.filter_by(slug=slug).first()
     if not gig:
