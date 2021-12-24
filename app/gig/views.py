@@ -2,7 +2,7 @@ from flask import Blueprint, redirect, url_for, flash, render_template, abort, r
 from werkzeug.utils import escape
 from app.models import Gig, Role
 from app import db
-from app.auth.views import current_user, login_required, role_required
+from app.auth.views import current_user, login, login_required, role_required, activation_required
 from app.gig.forms import CreateGigForm, UpdateGigForm
 from functools import wraps
 
@@ -81,6 +81,7 @@ def show(slug):
 @login_required
 @role_required(Role.EMPLOYER)
 @gig_owner_required
+@activation_required
 def delete(slug):
     gig = Gig.query.filter_by(slug=slug).first()
     if not gig:
@@ -92,6 +93,7 @@ def delete(slug):
 
 @gig.route('/my_gigs')
 @login_required
+@activation_required
 def my_gigs():
     gigs = None
     if current_user.is_admin():
@@ -106,24 +108,30 @@ def my_gigs():
 
 
 @gig.route('/apply/<slug>', methods=['POST'])
+@login_required
+@role_required(Role.MUSICIAN)
+@activation_required
 def apply(slug):
     gig = Gig.query.filter_by(slug=slug).first()
     if not gig:
         abort(404)
 
-    current_user.apply(gig)
+    current_user.apply_to_gig(gig)
     db.session.commit()
 
     flash(f"You applied to the gig: \"{gig.title}\"", "success")
     return redirect(request.referrer)
 
 @gig.route("/cancel_application/<slug>", methods=['POST'])
+@login_required
+@role_required(Role.MUSICIAN)
+@activation_required
 def cancel_application(slug):
     gig = Gig.query.filter_by(slug=slug).first()
     if not gig:
         abort(404)
 
-    current_user.unapply(gig)
+    current_user.unapply_from_gig(gig)
     db.session.commit()
 
     flash(f"You unapplied from the gig: \"{gig.title}\"", "success")

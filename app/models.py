@@ -3,27 +3,31 @@ from operator import truediv
 from app import db
 from werkzeug.security import generate_password_hash, check_password_hash
 from secrets import token_urlsafe
+from itsdangerous import URlSafeTimeSerializer
 from sqlalchemy import event
 from slugify import slugify
+from datetime import datetime
 
-def generate_token():
-    return token_urlsafe(20)
 
 def generate_hash(token):
     return generate_password_hash(token)
 
+
 def _check_token(hash, token):
     return check_password_hash(hash, token)
+
 
 class Role:
     ADMIN = 1
     MUSICIAN = 2
     EMPLOYER = 3
 
+
 applications = db.Table("applications",
-    db.Column("gig_id", db.Integer(), db.ForeignKey("gigs.id")),
-    db.Column("musician_id", db.Integer(), db.ForeignKey("users.id"))
-)
+                        db.Column("gig_id", db.Integer(), db.ForeignKey("gigs.id")),
+                        db.Column("musician_id", db.Integer(), db.ForeignKey("users.id"))
+                        )
+
 
 class Gig(db.Model):
     __tablename__ = "gigs"
@@ -43,9 +47,11 @@ class Gig(db.Model):
         self.location = location
         self.employer_id = employer_id
 
+
 @event.listens_for(Gig.title, 'set')
 def update_slug(target, value, old_value, initiator):
     target.slug = slugify(value) + "-" + token_urlsafe(3)
+
 
 class Remember(db.Model):
     __tablename__ = "remembers"
@@ -62,6 +68,7 @@ class Remember(db.Model):
     def check_token(self, token):
         return _check_token(self.remember_hash, token)
 
+
 class User(db.Model):
     __tablename__ = "users"
 
@@ -75,18 +82,27 @@ class User(db.Model):
     role_id = db.Column(db.Integer(), default=0)
     gigs = db.relationship("Gig", backref="employer", lazy="dynamic", cascade="all, delete-orphan")
     applied_gigs = db.relationship("Gig",
-                        secondary=applications,
-                        backref=db.backref("musicians", lazy="dynamic"),
-                        lazy="dynamic")
+                                   secondary=applications,
+                                   backref=db.backref("musicians", lazy="dynamic"),
+                                   lazy="dynamic")
+    confirmed = db.Column(db.Boolean(), default=False)
+    confirmation_hash = db.Column(db.String(255))
+    confirmation_sent_at = db.Column(db.DateTime())
+    confirmed_on = db.Column(db.DateTime())
 
-    def __init__(self, username="", email="", password="", 
-                    location="", description="", role_id=Role.ADMIN):
+    def __init__(self, username="", email="", password="",
+                 location="", description="", role_id=Role.ADMIN, confirmed=False):
         self.username = username
         self.email = email
         self.password_hash = generate_password_hash(password)
         self.location = location
         self.description = description
         self.role_id = role_id
+        self.confirmed = confirmed
+        if role_id == Role.ADMIN:
+            self.activated = True
+        else:
+            self.activated = False
 
     def __repr__(self):
         return f'<User {self.username}>'
@@ -131,18 +147,27 @@ class User(db.Model):
 
     def is_gig_owner(self, gig):
         return self.id == gig.employer_id
-        
+
     def is_applied_to(self, gig):
         if gig is None:
             return False
         return self.applied_gigs.filter_by(id=gig.id).first() is not None
 
-    def apply(self, gig):
+    def apply_to_gig(self, gig):
         if not self.is_applied_to(gig):
             self.applied_gigs.append(gig)
             db.session.add(self)
 
-    def unapply(self, gig):
+    def unapply_from_gig(self, gig):
         if self.is_applied_to(gig):
             self.applied_gigs.remove(gig)
             db.session.add(self)
+
+    def is_active(self):
+        return self.activated
+
+    def create_confirmation_token(self):
+        confirmation_token = generate_token()
+        self.confirmation_hash = generate_hash(confirmation_token)
+        self.confirmation_sent_at = datetime.utcnow()
+        db.session.add(self)

@@ -10,7 +10,8 @@ db = SQLAlchemy()
 def create_app():
     app = Flask(__name__)
     app.config.from_mapping(
-        SECRET_KEY=os.getenv("FLASK_SECRET_KEY") or 'a-secret-key',
+        SECRET_KEY=os.getenv("FLASK_SECRET_KEY") or 'a-secret-key-sdfJKY34',
+        SECURITY_PASSWORD_SALT=os.getenv('FLASK_PASSWORD_SALT') or '34jCfgsj43',
         SQLALCHEMY_DATABASE_URI='sqlite:///' + os.path.join(basedir, 'flask-auth.sqlite'),
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
         DEBUG=True,

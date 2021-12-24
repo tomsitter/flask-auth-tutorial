@@ -2,6 +2,7 @@ from flask import Blueprint, current_app, session, g, render_template, redirect,
 from app.auth.forms import RegistrationForm, LoginForm
 from app import db
 from app.models import User, Role
+from app.account.token import generate_confirmation_token
 from werkzeug.local import LocalProxy
 from itsdangerous.url_safe import URLSafeSerializer
 from functools import wraps
@@ -10,6 +11,7 @@ auth = Blueprint('auth', __name__, template_folder='templates')
 
 current_user = LocalProxy(lambda: get_current_user())
 
+
 def login_required(f):
     @wraps(f)
     def _login_required(*args, **kwargs):
@@ -17,6 +19,7 @@ def login_required(f):
             flash("You need to be logged in to access this page", "danger")
             return redirect(url_for("auth.login"))
         return f(*args, **kwargs)
+
     return _login_required
 
 
@@ -28,8 +31,22 @@ def role_required(role):
                 flash("You are not authorized to access this page", "danger")
                 return redirect(url_for("main.home"))
             return f(*args, **kwargs)
+
         return __role_required
+
     return _role_required
+
+
+def activation_required(f):
+    @wraps(f)
+    def _activation_required(*args, **kwargs):
+        if not current_user.is_active():
+            flash("Only activated users have access this page", "danger")
+            return redirect(url_for("main.home"))
+        return f(*args, **kwargs)
+
+    return _activation_required
+
 
 def admin_required(f):
     @wraps(f)
@@ -38,7 +55,9 @@ def admin_required(f):
             flash("You need to be a logged in admin to access this page", "danger")
             return redirect(url_for("auth.login"))
         return f(*args, **kwargs)
+
     return _admin_required
+
 
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
@@ -57,19 +76,18 @@ def login():
                 resp = make_response(redirect(url_for("main.home")))
                 remember_token = user.create_remember_token()
                 db.session.commit()
-                resp.set_cookie('remember_token', encrypt_cookie(remember_token), max_age=60*60*24*100)
-                resp.set_cookie('user_id', encrypt_cookie(user.id), max_age=60*60*24*100)
+                resp.set_cookie('remember_token', encrypt_cookie(remember_token), max_age=60 * 60 * 24 * 100)
+                resp.set_cookie('user_id', encrypt_cookie(user.id), max_age=60 * 60 * 24 * 100)
                 return resp
             return redirect(url_for("main.home"))
         else:
             form.password.errors.append("Incorrect password")
-    
+
     return render_template("login.html", form=form)
 
 
 @auth.route("/register", methods=["GET", "POST"])
 def register():
-
     form = RegistrationForm()
 
     if form.validate_on_submit():
@@ -84,9 +102,16 @@ def register():
         db.session.add(user)
         db.session.commit()
         flash("You are registered", "success")
+        login_user(user)
+        user.create_confirmation_token()
+        db.session.commit()
+
+        token = generate_confirmation_token(user.email)
+
         return redirect(url_for("auth.login"))
 
     return render_template("register.html", form=form)
+
 
 @auth.route("/logout")
 @login_required
@@ -103,16 +128,20 @@ def logout():
     flash("You are logged out", "success")
     return redirect(url_for("main.home"))
 
+
 def logout_user():
     session.pop("user_id")
 
+
 def login_user(user):
     session["user_id"] = user.id
+
 
 def encrypt_cookie(content):
     s = URLSafeSerializer(current_app.config["SECRET_KEY"], salt="saltedcookie")
     encrypted_content = s.dumps(content)
     return encrypted_content
+
 
 def decrypt_cookie(encrypted_content):
     s = URLSafeSerializer(current_app.config["SECRET_KEY"], salt="saltedcookie")
@@ -122,13 +151,16 @@ def decrypt_cookie(encrypted_content):
         content = "-1"
     return content
 
+
 @auth.app_context_processor
 def inject_current_user():
     return dict(current_user=get_current_user())
 
+
 @auth.app_context_processor
 def inject_roles():
     return dict(Role=Role)
+
 
 def get_current_user():
     _current_user = getattr(g, "_current_user", None)
@@ -142,10 +174,8 @@ def get_current_user():
             if user and user.check_remember_token(decrypt_cookie(request.cookies.get("user_id"))):
                 login_user(user)
                 _current_user = g._current_user = user
-        
+
     if _current_user is None:
         _current_user = User()
 
     return _current_user
-
-

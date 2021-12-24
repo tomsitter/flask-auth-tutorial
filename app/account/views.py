@@ -3,12 +3,13 @@ from werkzeug.utils import escape, unescape
 from app.account.forms import UpdateAccountForm
 from app import db
 from app.models import User, Role
-from app.auth.views import current_user, login_required, logout_user
+from app.auth.views import current_user, login_required, logout_user, activation_required
 
 account = Blueprint("account", __name__, template_folder="templates")
 
 @account.route("/profile/<username>")
 @login_required
+@activation_required
 def show(username):
     user = User.query.filter_by(username=username).first()
     gigs = None
@@ -20,6 +21,7 @@ def show(username):
 
 @account.route("/edit", methods=["GET", "POST"])
 @login_required
+@activation_required
 def edit():
     form = UpdateAccountForm()
 
@@ -37,6 +39,7 @@ def edit():
 
 @account.route("/delete", methods=["POST"])
 @login_required
+@activation_required
 def delete():
     db.session.delete(current_user._get_current_object())
     db.session.commit()
