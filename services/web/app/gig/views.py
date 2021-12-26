@@ -98,6 +98,8 @@ def delete(slug):
 @login_required
 def my_gigs():
     gigs = None
+    if current_user.is_admin():
+        return redirect(url_for("admin.gigs"))
     if current_user.is_role(Role.MUSICIAN):
         gigs = current_user.applied_gigs.all()
     if current_user.is_role(Role.EMPLOYER):
@@ -118,4 +120,16 @@ def apply(slug):
     db.session.commit()
 
     flash(f"You applied to the gig: \"{gig.title}\"", "success")
+    return redirect(request.referrer)
+
+@gig.route("/cancel_application/<slug>", methods=['POST'])
+def cancel_application(slug):
+    gig = Gig.query.filter_by(slug=slug).first()
+    if not gig:
+        abort(404)
+
+    current_user.unapply(gig)
+    db.session.commit()
+
+    flash(f"You unapplied from the gig: \"{gig.title}\"", "success")
     return redirect(request.referrer)

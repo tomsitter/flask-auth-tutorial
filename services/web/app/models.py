@@ -141,3 +141,8 @@ class User(db.Model):
         if not self.is_applied_to(gig):
             self.applied_gigs.append(gig)
             db.session.add(self)
+
+    def unapply(self, gig):
+        if self.is_applied_to(gig):
+            self.applied_gigs.remove(gig)
+            db.session.add(self)

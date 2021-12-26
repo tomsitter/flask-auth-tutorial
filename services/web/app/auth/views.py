@@ -31,6 +31,15 @@ def role_required(role):
         return __role_required
     return _role_required
 
+def admin_required(f):
+    @wraps(f)
+    def _admin_required(*args, **kwargs):
+        if not current_user.is_admin():
+            flash("You need to be a logged in admin to access this page", "danger")
+            return redirect(url_for("auth.login"))
+        return f(*args, **kwargs)
+    return _admin_required
+
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()

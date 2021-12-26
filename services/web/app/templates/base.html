@@ -37,6 +37,11 @@
           <li class="nav-item">
             <a href="{{ url_for('auth.logout') }}" class="nav-link">Logout</a>
           </li>
+            {% if current_user.is_admin() %}
+            <li class="nav-item {{ 'active' if active_page == 'admin' }}">
+              <a href="{{ url_for('admin.gigs') }}" class="nav-link">Admin</a>
+            </li>
+            {% endif %}
           {% else %}
           <li class="nav-item {{ 'active' if active_page == 'login' }}">
             <a href="{{ url_for('auth.login') }}" class="nav-link">Login</a>
