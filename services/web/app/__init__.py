@@ -11,9 +11,10 @@ def create_app():
     app = Flask(__name__)
     app.config.from_mapping(
         SECRET_KEY=os.getenv("FLASK_SECRET_KEY") or 'a-secret-key',
-        SQLALCHEMY_DATABASE_URI='sqlite:///' + os.path.join(basedir, 'flask-auth.sqlite'),
+        SQLALCHEMY_DATABASE_URI=os.getenv("DATABASE_URL", 'sqlite://' + os.path.join(basedir, 'flask-auth.sqlite')),
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
         DEBUG=True,
+        STATIC_FOLDER = f"{os.getenv('APP_FOLDER')}/static"
     )
 
     # connect db to our app

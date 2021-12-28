@@ -4,9 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-psycopg2-binary = "*"
-gunicorn = "*"
-python-slugify = "*"
+slugify = "*"
 
 [dev-packages]
 
