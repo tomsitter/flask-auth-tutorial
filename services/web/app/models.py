@@ -6,24 +6,30 @@ from secrets import token_urlsafe
 from sqlalchemy import event
 from slugify import slugify
 
+
 def generate_token():
     return token_urlsafe(20)
+
 
 def generate_hash(token):
     return generate_password_hash(token)
 
+
 def _check_token(hash, token):
     return check_password_hash(hash, token)
+
 
 class Role:
     ADMIN = 1
     MUSICIAN = 2
     EMPLOYER = 3
 
+
 applications = db.Table("applications",
-    db.Column("gig_id", db.Integer(), db.ForeignKey("gigs.id")),
-    db.Column("musician_id", db.Integer(), db.ForeignKey("users.id"))
-)
+                        db.Column("gig_id", db.Integer(), db.ForeignKey("gigs.id")),
+                        db.Column("musician_id", db.Integer(), db.ForeignKey("users.id"))
+                        )
+
 
 class Gig(db.Model):
     __tablename__ = "gigs"
@@ -43,9 +49,11 @@ class Gig(db.Model):
         self.location = location
         self.employer_id = employer_id
 
+
 @event.listens_for(Gig.title, 'set')
 def update_slug(target, value, old_value, initiator):
     target.slug = slugify(value) + "-" + token_urlsafe(3)
+
 
 class Remember(db.Model):
     __tablename__ = "remembers"
@@ -62,6 +70,7 @@ class Remember(db.Model):
     def check_token(self, token):
         return _check_token(self.remember_hash, token)
 
+
 class User(db.Model):
     __tablename__ = "users"
 
@@ -75,12 +84,12 @@ class User(db.Model):
     role_id = db.Column(db.Integer(), default=0)
     gigs = db.relationship("Gig", backref="employer", lazy="dynamic", cascade="all, delete-orphan")
     applied_gigs = db.relationship("Gig",
-                        secondary=applications,
-                        backref=db.backref("musicians", lazy="dynamic"),
-                        lazy="dynamic")
+                                   secondary=applications,
+                                   backref=db.backref("musicians", lazy="dynamic"),
+                                   lazy="dynamic")
 
-    def __init__(self, username="", email="", password="", 
-                    location="", description="", role_id=Role.ADMIN):
+    def __init__(self, username="", email="", password="",
+                 location="", description="", role_id=Role.ADMIN):
         self.username = username
         self.email = email
         self.password_hash = generate_password_hash(password)
@@ -131,7 +140,7 @@ class User(db.Model):
 
     def is_gig_owner(self, gig):
         return self.id == gig.employer_id
-        
+
     def is_applied_to(self, gig):
         if gig is None:
             return False

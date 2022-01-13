@@ -4,8 +4,9 @@ from flask_sqlalchemy import SQLAlchemy
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
-#init db globally so we can import it into other files
+# init db globally so we can import it into other files
 db = SQLAlchemy()
+
 
 def create_app():
     app = Flask(__name__)
@@ -14,7 +15,10 @@ def create_app():
         SQLALCHEMY_DATABASE_URI=os.getenv("DATABASE_URL", 'sqlite://' + os.path.join(basedir, 'flask-auth.sqlite')),
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
         DEBUG=True,
-        STATIC_FOLDER = f"{os.getenv('APP_FOLDER')}/static"
+        STATIC_FOLDER=f"{os.getenv('APP_FOLDER')}/static",
+        MAIL_SERVER='smtp@gmail.com',
+        MAIL_USE_TLS=True,
+        MAIL_PORT=587,
     )
 
     # connect db to our app
